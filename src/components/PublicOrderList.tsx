@@ -5,22 +5,26 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { formatTime } from '../lib/utils';
 
 export const PublicOrderList: React.FC = () => {
-  const { orders } = useApp();
+  const { orders, selectedRestaurantId } = useApp();
 
-  if (orders.length === 0) return null;
+  if (!selectedRestaurantId || orders.length === 0) return null;
+
+  const filteredOrders = orders.filter(o => o.restaurantId === selectedRestaurantId);
+  
+  if (filteredOrders.length === 0) return null;
 
   return (
-    <div className="mt-12 space-y-6">
+    <div className="mt-12 space-y-6 pb-20">
       <div className="flex items-center gap-3 mb-2">
         <div className="bg-primary p-2 rounded-lg border-2 border-slate-900 shadow-[2px_2px_0px_0px_rgba(15,23,42,1)]">
           <Users className="text-white" size={20} />
         </div>
-        <h2 className="text-2xl font-black text-slate-900">今日團購清單 ({orders.length})</h2>
+        <h2 className="text-2xl font-black text-slate-900">大家點了什麼 ({filteredOrders.length})</h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <AnimatePresence>
-          {orders.map((order, index) => (
+          {filteredOrders.map((order, index) => (
             <motion.div
               key={order.id}
               initial={{ opacity: 0, y: 20 }}

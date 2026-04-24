@@ -1,5 +1,13 @@
+export interface Restaurant {
+  id: string;
+  name: string;
+  active: boolean;
+  createdAt?: any;
+}
+
 export interface MenuItem {
   id: string;
+  restaurantId: string;
   name: string;
   price: number;
   category?: string;
@@ -8,6 +16,7 @@ export interface MenuItem {
 
 export interface Order {
   id: string;
+  restaurantId: string;
   customerName: string;
   notes: string;
   itemId: string;
