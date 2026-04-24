@@ -1,0 +1,50 @@
+{
+  "entities": {
+    "MenuItem": {
+      "title": "Menu Item",
+      "description": "A bento item available for order",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "active": { "type": "boolean" },
+        "category": { "type": "string" }
+      },
+      "required": ["name", "price", "active"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "A bento order placed by a customer",
+      "type": "object",
+      "properties": {
+        "customerName": { "type": "string" },
+        "items": { "type": "array" },
+        "totalPrice": { "type": "number" },
+        "notes": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "cooking", "ready", "delivered"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["customerName", "items", "totalPrice", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "menu": {
+      "schema": "MenuItem",
+      "description": "Collection of bento items"
+    },
+    "orders": {
+      "schema": "Order",
+      "description": "Collection of customer orders"
+    },
+    "admins": {
+      "schema": {
+        "title": "Admin",
+        "type": "object",
+        "properties": {
+          "email": { "type": "string" }
+        }
+      },
+      "description": "Whitelist of admin users"
+    }
+  }
+}
