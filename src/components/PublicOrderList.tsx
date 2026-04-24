@@ -5,9 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { formatTime } from '../lib/utils';
 
 export const PublicOrderList: React.FC = () => {
-  const { orders, selectedRestaurantId, menu } = useApp();
+  const { orders, selectedRestaurantId, menu, loading } = useApp();
 
-  if (!selectedRestaurantId || orders.length === 0) return null;
+  if (loading || !selectedRestaurantId || orders.length === 0) return null;
 
   const filteredOrders = orders.filter(o => o.restaurantId === selectedRestaurantId);
   

@@ -15,6 +15,7 @@ import {
   ChevronRight,
   AlertCircle,
   Edit2,
+  CheckCircle2,
   X
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -34,6 +35,7 @@ export const AdminDashboard: React.FC = () => {
     deleteMenuItem,
     addRestaurant, 
     deleteRestaurant,
+    toggleRestaurantActive,
     resetTodayOrders 
   } = useApp();
   
@@ -242,22 +244,46 @@ export const AdminDashboard: React.FC = () => {
               }`}
             >
               <div className="pr-10">
-                <div className={`text-[10px] font-black uppercase mb-1 tracking-widest ${selectedRestaurantId === r.id ? 'text-white/60' : 'text-slate-400'}`}>
-                  Restaurant ID: {r.id.substring(0, 8)}
+                <div className="flex items-center gap-2 mb-1">
+                  <div className={`text-[10px] font-black uppercase tracking-widest ${selectedRestaurantId === r.id ? 'text-white/60' : 'text-slate-400'}`}>
+                    Restaurant ID: {r.id.substring(0, 8)}
+                  </div>
+                  {r.active && (
+                    <span className="bg-green-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black animate-pulse">
+                      ACTIVE
+                    </span>
+                  )}
                 </div>
                 <div className="text-2xl font-black leading-tight break-words">{r.name}</div>
               </div>
+              
+              <div className="absolute top-6 right-6 flex flex-col gap-2">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleRestaurantActive(r.id, !r.active);
+                  }}
+                  title={r.active ? "設為不公開" : "目前設為公開顯示"}
+                  className={`p-2 rounded-xl border-2 transition-all ${
+                    r.active 
+                      ? 'bg-green-500 border-white text-white' 
+                      : 'bg-white border-slate-200 text-slate-300 hover:text-green-500 hover:border-green-500'
+                  }`}
+                >
+                  <CheckCircle2 size={18} />
+                </button>
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
                     if (confirm(`確定刪除 ${r.name} 嗎？`)) deleteRestaurant(r.id);
                   }}
-                  className={`absolute top-6 right-6 p-2 rounded-xl transition-all ${
+                  className={`p-2 rounded-xl transition-all ${
                     selectedRestaurantId === r.id ? 'hover:bg-white/20 text-white' : 'text-slate-300 hover:bg-red-500 hover:text-white hover:border-slate-900 border-2 border-transparent'
                   }`}
                 >
                   <Trash2 size={18} />
                 </button>
+              </div>
             </div>
           ))}
           {restaurants.length === 0 && (
@@ -392,7 +418,7 @@ export const AdminDashboard: React.FC = () => {
               </div>
 
               <div className="space-y-4 flex-1 overflow-y-auto max-h-[600px] pr-2 custom-scrollbar">
-                {Object.entries(personOrders).map(([customerName, orders]) => (
+                {Object.entries(personOrders).map(([customerName, orders]: [string, any[]]) => (
                   <motion.div 
                     key={customerName}
                     initial={{ opacity: 0, x: 20 }}

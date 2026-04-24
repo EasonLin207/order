@@ -33,6 +33,7 @@ interface AppContextType {
   addRestaurant: (name: string) => Promise<void>;
   deleteRestaurant: (id: string) => Promise<void>;
   resetTodayOrders: (restaurantId: string) => Promise<void>;
+  toggleRestaurantActive: (id: string, active: boolean) => Promise<void>;
   loading: boolean;
   firebaseReady: boolean;
 }
@@ -63,9 +64,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         restaurantUnsub = onSnapshot(collection(db, 'restaurants'), { includeMetadataChanges: true }, (snapshot) => {
           const restaurantData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Restaurant));
           setRestaurants(restaurantData);
-          if (restaurantData.length > 0 && !selectedRestaurantId) {
-            // Don't auto-set here to avoid loop, let the UI handle it or use a separate ref
-          }
           setLoading(false);
         });
       } else {
@@ -81,6 +79,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (ordersUnsub) ordersUnsub();
     };
   }, []);
+
+  // Effect to auto-select active restaurant
+  useEffect(() => {
+    if (restaurants.length > 0) {
+      const activeRestaurant = restaurants.find(r => r.active);
+      if (activeRestaurant) {
+        // Only auto-switch if we haven't selected anything yet, 
+        // or if we were on an active restaurant that is no longer active
+        const currentIsActive = restaurants.find(r => r.id === selectedRestaurantId)?.active;
+        if (!selectedRestaurantId || (!currentIsActive && activeRestaurant.id !== selectedRestaurantId)) {
+          setSelectedRestaurantId(activeRestaurant.id);
+        }
+      } else if (!selectedRestaurantId) {
+        setSelectedRestaurantId(restaurants[0].id);
+      }
+    }
+  }, [restaurants, selectedRestaurantId]);
 
   // Effect to subscribe to menu and orders when selectedRestaurantId changes
   useEffect(() => {
@@ -166,7 +181,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       await addDoc(collection(dbInstance, 'restaurants'), {
         name,
-        active: true,
+        active: false,
         createdAt: serverTimestamp()
       });
       toast.success('餐廳已新增');
@@ -184,6 +199,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       toast.success('餐廳已刪除');
     } catch (e) {
       toast.error('刪除失敗');
+    }
+  };
+
+  const toggleRestaurantActive = async (id: string, active: boolean) => {
+    if (!dbInstance) return;
+    try {
+      const batch = writeBatch(dbInstance);
+      
+      // If setting to active, deactivate all others first
+      if (active) {
+        restaurants.forEach(r => {
+          if (r.id !== id && r.active) {
+            batch.update(doc(dbInstance, 'restaurants', r.id), { active: false });
+          }
+        });
+      }
+      
+      batch.update(doc(dbInstance, 'restaurants', id), { active });
+      await batch.commit();
+      toast.success(active ? '餐廳已啟動' : '餐廳已關閉');
+    } catch (e) {
+      toast.error('密令執行失敗');
     }
   };
 
@@ -296,6 +333,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       deleteMenuItem,
       addRestaurant,
       deleteRestaurant,
+      toggleRestaurantActive,
       resetTodayOrders,
       loading, 
       firebaseReady 

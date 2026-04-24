@@ -5,7 +5,7 @@ import { Send, CheckCircle2, ShoppingBag, Store, ChevronRight, Plus, Minus } fro
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const OrderForm: React.FC = () => {
-  const { menu, addOrder, restaurants, selectedRestaurantId, setSelectedRestaurantId } = useApp();
+  const { menu, addOrder, restaurants, selectedRestaurantId, setSelectedRestaurantId, loading } = useApp();
   const [name, setName] = useState('');
   const [notes, setNotes] = useState('');
   const [cart, setCart] = useState<Record<string, number>>({});
@@ -64,6 +64,15 @@ export const OrderForm: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 bg-slate-50 rounded-3xl border-4 border-dashed border-slate-200">
+        <div className="w-12 h-12 border-4 border-slate-900 border-t-primary rounded-full animate-spin mb-4" />
+        <p className="text-slate-400 font-black">正在讀取今日餐廳資訊...</p>
+      </div>
+    );
+  }
+
   if (submitted) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -89,46 +98,14 @@ export const OrderForm: React.FC = () => {
       </div>
 
       {!selectedRestaurantId ? (
-        <div className="space-y-6">
-          <div className="brutal-card">
-            <label className="block text-xl font-black mb-6 uppercase tracking-wide flex items-center gap-2">
-              <Store className="text-primary" /> 請選擇餐廳
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {restaurants.map(r => (
-                <button
-                  key={r.id}
-                  onClick={() => setSelectedRestaurantId(r.id)}
-                  className="bg-white p-6 rounded-3xl border-4 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] hover:translate-y-[-2px] transition-all flex justify-between items-center group"
-                >
-                  <span className="text-xl font-black">{r.name}</span>
-                  <ChevronRight className="group-hover:translate-x-1 transition-transform" />
-                </button>
-              ))}
-              {restaurants.length === 0 && (
-                <div className="col-span-full py-12 text-center text-slate-400 font-bold">
-                  目前沒有可用的餐廳
-                </div>
-              )}
-            </div>
-          </div>
+        <div className="text-center py-20 bg-slate-50 rounded-3xl border-4 border-dashed border-slate-200">
+          <Store size={48} className="mx-auto text-slate-200 mb-4" />
+          <p className="text-slate-400 font-black text-xl">目前尚未開啟點餐</p>
+          <p className="text-slate-400 font-bold text-sm uppercase tracking-widest mt-2">請聯絡管理員啟動餐廳</p>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-8 pb-12">
-          {/* Back Button */}
-          <button 
-            type="button"
-            onClick={() => {
-              setSelectedRestaurantId(null);
-              setCart({});
-            }}
-            className="flex items-center gap-2 text-slate-400 font-black hover:text-primary transition-colors text-sm mb-4"
-          >
-            ← 切換餐廳 ({selectedRestaurant?.name})
-          </button>
-
           <div className="space-y-8">
-            {/* Identity Info */}
             <div className="brutal-card">
               <div className="space-y-4">
                 <div>
@@ -159,72 +136,67 @@ export const OrderForm: React.FC = () => {
                     {items.filter(item => item.active).map((item) => {
                       const qty = cart[item.id] || 0;
                       return (
-                        <div
+                        <motion.div
+                          layout
                           key={item.id}
-                          className={`flex flex-col p-5 rounded-2xl border-4 transition-all relative select-none ${
+                          className={`flex flex-col p-4 rounded-2xl border-4 transition-all relative select-none cursor-pointer ${
                             qty > 0
-                              ? 'border-slate-900 bg-secondary shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] translate-y-[-2px] text-white'
-                              : 'bg-white border-slate-200 hover:border-slate-400 text-slate-800'
+                              ? 'border-slate-900 bg-secondary shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] translate-y-[-1px] text-white'
+                              : 'bg-white border-slate-200 hover:border-slate-300 text-slate-900'
                           }`}
+                          onClick={() => qty === 0 && updateQuantity(item.id, 1)}
                         >
-                          {/* Item Clickable Area */}
-                          <div 
-                            className="flex flex-col h-full cursor-pointer group"
-                            onClick={() => updateQuantity(item.id, 1)}
-                          >
-                            <div className="flex justify-between items-start mb-3">
-                              <div className={`p-2 rounded-lg ${qty > 0 ? 'bg-white/20' : 'bg-slate-100'}`}>
-                                <ShoppingBag size={20} className={qty > 0 ? 'text-white' : 'text-slate-500'} />
-                              </div>
-                              <span className={`font-black text-2xl ${qty > 0 ? 'text-white' : 'text-primary'}`}>
-                                ${item.price}
-                              </span>
-                            </div>
-                            <span className="font-black text-xl leading-tight mb-6">{item.name}</span>
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="font-black text-lg leading-tight flex-1">{item.name}</span>
+                            <span className={`font-black text-xl ml-4 ${qty > 0 ? 'text-white' : 'text-primary'}`}>
+                              ${item.price}
+                            </span>
                           </div>
                           
-                          {/* Control Row */}
-                          <div className={`mt-auto flex items-center justify-between gap-1 p-1 rounded-xl transition-colors ${
-                            qty > 0 ? 'bg-white/20' : 'bg-slate-50 border-2 border-slate-100'
-                          }`}>
-                            <button
-                              type="button"
-                              onClick={() => updateQuantity(item.id, -1)}
-                              disabled={qty === 0}
-                              className={`p-2 rounded-lg transition-all ${
-                                qty > 0 
-                                  ? 'hover:bg-white/20 text-white active:scale-90' 
-                                  : 'text-slate-200 cursor-not-allowed'
-                              }`}
-                            >
-                              <Minus size={20} strokeWidth={4} />
-                            </button>
-                            
-                            <AnimatePresence mode="wait">
-                              <motion.span 
-                                key={qty}
-                                initial={{ y: 5, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                exit={{ y: -5, opacity: 0 }}
-                                className="font-black text-xl w-8 text-center"
+                          <AnimatePresence>
+                            {qty > 0 && (
+                              <motion.div 
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="overflow-hidden"
                               >
-                                {qty}
-                              </motion.span>
-                            </AnimatePresence>
+                                <div className="mt-3 pt-3 border-t-2 border-white/20 flex items-center justify-between">
+                                  <div className="flex items-center gap-4 bg-white/20 p-1 rounded-xl">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        updateQuantity(item.id, -1);
+                                      }}
+                                      className="p-1.5 rounded-lg hover:bg-white/20 active:scale-90 transition-all"
+                                    >
+                                      <Minus size={18} strokeWidth={4} />
+                                    </button>
+                                    
+                                    <span className="font-black text-lg w-6 text-center">
+                                      {qty}
+                                    </span>
 
-                            <button
-                              type="button"
-                              onClick={() => updateQuantity(item.id, 1)}
-                              className={`p-2 rounded-lg transition-all ${
-                                qty > 0 
-                                  ? 'hover:bg-white/20 text-white active:scale-90' 
-                                  : 'hover:bg-slate-200 text-slate-600 active:scale-90'
-                              }`}
-                            >
-                              <Plus size={20} strokeWidth={4} />
-                            </button>
-                          </div>
-                        </div>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        updateQuantity(item.id, 1);
+                                      }}
+                                      className="p-1.5 rounded-lg hover:bg-white/20 active:scale-90 transition-all"
+                                    >
+                                      <Plus size={18} strokeWidth={4} />
+                                    </button>
+                                  </div>
+                                  <span className="text-xs font-black uppercase tracking-widest opacity-60">
+                                    已選擇
+                                  </span>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </motion.div>
                       );
                     })}
                   </div>
