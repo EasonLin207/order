@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, enableMultiTabIndexedDbPersistence } from 'firebase/firestore';
 
 // Initialized via a helper to avoid top-level await issues in some environments
 let config: any = null;
@@ -26,6 +26,17 @@ const initFirebase = async () => {
       }
       db = getFirestore(app);
       auth = getAuth(app);
+
+      // Enable offline persistence for faster data sync perception
+      try {
+        await enableMultiTabIndexedDbPersistence(db);
+      } catch (err: any) {
+        if (err.code === 'failed-precondition') {
+          console.warn('Persistance failed: Multiple tabs open');
+        } else if (err.code === 'unimplemented') {
+          console.warn('Persistance failed: Browser doesn\'t support it');
+        }
+      }
     }
   } catch (e) {
     console.log("Firebase config not found or invalid - falling back to mock mode");

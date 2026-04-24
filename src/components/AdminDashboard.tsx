@@ -54,12 +54,46 @@ export const AdminDashboard: React.FC = () => {
   // Statistics for selected restaurant
   const filteredOrders = orders.filter(o => o.restaurantId === selectedRestaurantId);
   const totalOrders = filteredOrders.reduce((sum, o) => sum + (o.quantity || 1), 0);
+  
+  // Group by item for summary
   const orderStats = filteredOrders.reduce((acc, order) => {
-    acc[order.itemName] = (acc[order.itemName] || 0) + (order.quantity || 1);
+    // Try to get name from order, fallback to menu lookup, then '未知品項'
+    let name = (order.itemName || '').trim();
+    if (!name && order.itemId) {
+      const menuItem = menu.find(m => m.id === order.itemId);
+      name = (menuItem?.name || '').trim();
+    }
+    
+    if (!name) {
+      name = '未知品項';
+    }
+    
+    acc[name] = (acc[name] || 0) + (order.quantity || 1);
     return acc;
   }, {} as Record<string, number>);
 
   const sortedStats = Object.entries(orderStats).sort((a, b) => (b[1] as number) - (a[1] as number));
+
+  // Group by person for individual details
+  const personOrders = filteredOrders.reduce((acc, order) => {
+    const customer = (order.customerName || '匿名用戶').trim();
+    if (!acc[customer]) {
+      acc[customer] = [];
+    }
+    
+    // Ensure order in group also has a visible name
+    const orderWithPossibleName = { ...order };
+    let name = (orderWithPossibleName.itemName || '').trim();
+    if (!name && order.itemId) {
+      const menuItem = menu.find(m => m.id === order.itemId);
+      name = (menuItem?.name || '').trim();
+    }
+    
+    orderWithPossibleName.itemName = name || '未知品項';
+    
+    acc[customer].push(orderWithPossibleName);
+    return acc;
+  }, {} as Record<string, typeof filteredOrders>);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!selectedRestaurantId) {
@@ -298,43 +332,120 @@ export const AdminDashboard: React.FC = () => {
           </div>
 
           {/* Main Stats */}
-          <div className="brutal-card bg-slate-900 text-white border-slate-900">
-            <h2 className="text-2xl font-black mb-8 flex items-center gap-3">
-              <TrendingUp size={28} className="text-primary" /> 
-              點餐統計報告
-            </h2>
-            
-            <div className="space-y-6">
-              {sortedStats.map(([name, count]) => (
-                <div key={name} className="space-y-3">
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <span className="text-lg font-black">{name}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-3xl font-black text-primary">{count}</span>
-                      <span className="text-xs font-bold text-white/40 ml-1">份</span>
-                    </div>
-                  </div>
-                  <div className="w-full bg-white/10 h-4 rounded-full overflow-hidden border-2 border-white/5">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${((count as number) / Math.max(totalOrders, 1)) * 100}%` }}
-                      className="bg-primary h-full shadow-[0_0_10_rgba(255,107,53,0.5)]"
-                      transition={{ duration: 0.8, ease: "easeOut" }}
-                    />
-                  </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Item Summary Card */}
+            <div className="brutal-card bg-white text-slate-900 border-slate-900 h-full flex flex-col">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-black flex items-center gap-3">
+                  <TrendingUp size={28} className="text-primary" /> 
+                  餐點統計總覽
+                </h2>
+                <div className="bg-slate-100 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest text-slate-400">
+                  Order Summary
                 </div>
-              ))}
+              </div>
               
-              {sortedStats.length === 0 && (
-                <div className="py-20 text-center">
-                  <div className="bg-white/5 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-dashed border-white/10">
-                    <Package size={32} className="text-white/20" />
+              <div className="space-y-6 flex-1">
+                {sortedStats.map(([name, count]) => (
+                  <div key={name} className="space-y-3">
+                    <div className="flex justify-between items-end">
+                      <div>
+                        <span className="text-lg font-black text-slate-900">{name}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-3xl font-black text-primary">{count}</span>
+                        <span className="text-xs font-bold text-slate-400 ml-1">份</span>
+                      </div>
+                    </div>
+                    <div className="w-full bg-slate-100 h-4 rounded-full overflow-hidden border-2 border-slate-200">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${((count as number) / Math.max(totalOrders, 1)) * 100}%` }}
+                        className="bg-primary h-full"
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                      />
+                    </div>
                   </div>
-                  <p className="text-white/40 text-lg font-bold">目前無任何訂單統計資料</p>
+                ))}
+                
+                {sortedStats.length === 0 && (
+                  <div className="py-20 text-center flex-1 flex flex-col justify-center">
+                    <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-dashed border-slate-200">
+                      <Package size={32} className="text-slate-200" />
+                    </div>
+                    <p className="text-slate-400 text-lg font-bold">目前無任何訂單統計資料</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Individual Orders Card */}
+            <div className="brutal-card bg-white border-slate-900 h-full flex flex-col">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-black flex items-center gap-3 text-slate-900">
+                  <FileText size={28} className="text-secondary" /> 
+                  個別訂單明細
+                </h2>
+                <div className="bg-secondary/10 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest text-secondary">
+                  Customer Details
                 </div>
-              )}
+              </div>
+
+              <div className="space-y-4 flex-1 overflow-y-auto max-h-[600px] pr-2 custom-scrollbar">
+                {Object.entries(personOrders).map(([customerName, orders]) => (
+                  <motion.div 
+                    key={customerName}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="p-4 rounded-2xl border-4 border-slate-100 bg-slate-50 hover:border-slate-900 transition-all group"
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-black">
+                          {customerName.charAt(0)}
+                        </div>
+                        <div>
+                          <h4 className="font-black text-slate-900 text-lg">{customerName}</h4>
+                          <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                            Total: ${orders.reduce((sum, o) => sum + (o.price * o.quantity), 0)}
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-black uppercase bg-slate-200 px-2 py-0.5 rounded-lg text-slate-500">
+                        {orders.length} items
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {orders.map((o, idx) => (
+                        <div key={idx} className="flex justify-between items-center bg-white p-2 rounded-lg border-2 border-slate-100 group-hover:border-slate-200 transition-colors">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-black text-secondary">x{o.quantity}</span>
+                            <span className="font-bold text-slate-700 text-sm">{o.itemName}</span>
+                          </div>
+                          <span className="font-black text-slate-900 text-sm">${o.price * o.quantity}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {orders[0]?.notes && (
+                      <div className="mt-3 bg-primary/5 p-2 rounded-lg border-2 border-primary/10">
+                        <div className="flex items-center gap-1 mb-1 text-[10px] font-black uppercase text-primary">
+                          <span className="w-1.5 h-1.5 bg-primary rounded-full" /> 備註
+                        </div>
+                        <p className="text-xs font-bold text-slate-600 italic">"{orders[0].notes}"</p>
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+
+                {Object.keys(personOrders).length === 0 && (
+                  <div className="py-20 text-center flex-1 flex flex-col justify-center">
+                    <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-dashed border-slate-200">
+                      <Clock size={32} className="text-slate-200" />
+                    </div>
+                    <p className="text-slate-400 text-lg font-bold">等待第一張訂單進場...</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

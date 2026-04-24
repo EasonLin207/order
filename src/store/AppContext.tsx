@@ -60,7 +60,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setFirebaseReady(true);
 
         // Subscribe to Restaurants
-        restaurantUnsub = onSnapshot(collection(db, 'restaurants'), (snapshot) => {
+        restaurantUnsub = onSnapshot(collection(db, 'restaurants'), { includeMetadataChanges: true }, (snapshot) => {
           const restaurantData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Restaurant));
           setRestaurants(restaurantData);
           if (restaurantData.length > 0 && !selectedRestaurantId) {
@@ -90,7 +90,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (dbInstance && selectedRestaurantId) {
       // Subscribe to Menu for selected restaurant
       const menuQuery = query(collection(dbInstance, 'menu'), where('restaurantId', '==', selectedRestaurantId));
-      menuUnsub = onSnapshot(menuQuery, (snapshot) => {
+      menuUnsub = onSnapshot(menuQuery, { includeMetadataChanges: true }, (snapshot) => {
         const menuData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MenuItem));
         setMenu(menuData);
       });
@@ -98,12 +98,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Subscribe to Orders for selected restaurant
       const ordersQuery = query(
         collection(dbInstance, 'orders'), 
-        where('restaurantId', '==', selectedRestaurantId),
-        orderBy('createdAt', 'desc')
+        where('restaurantId', '==', selectedRestaurantId)
       );
-      ordersUnsub = onSnapshot(ordersQuery, (snapshot) => {
+      ordersUnsub = onSnapshot(ordersQuery, { includeMetadataChanges: true }, (snapshot) => {
         const ordersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
-        setOrders(ordersData);
+        // Sort client-side by createdAt descending to avoid index requirement
+        const sortedOrders = [...ordersData].sort((a, b) => {
+          const getTime = (val: any) => {
+            if (!val) return 0;
+            if (typeof val.toMillis === 'function') return val.toMillis();
+            if (val instanceof Date) return val.getTime();
+            return new Date(val).getTime() || 0;
+          };
+          return getTime(b.createdAt) - getTime(a.createdAt);
+        });
+        setOrders(sortedOrders);
       });
     } else if (!selectedRestaurantId) {
       setMenu([]);

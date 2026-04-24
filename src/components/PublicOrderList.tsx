@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { formatTime } from '../lib/utils';
 
 export const PublicOrderList: React.FC = () => {
-  const { orders, selectedRestaurantId } = useApp();
+  const { orders, selectedRestaurantId, menu } = useApp();
 
   if (!selectedRestaurantId || orders.length === 0) return null;
 
@@ -13,18 +13,27 @@ export const PublicOrderList: React.FC = () => {
   
   if (filteredOrders.length === 0) return null;
 
+  // Enhance orders with names if missing
+  const enhancedOrders = filteredOrders.map(order => {
+    if (!order.itemName && order.itemId) {
+      const menuItem = menu.find(m => m.id === order.itemId);
+      return { ...order, itemName: menuItem?.name || '未知品項' };
+    }
+    return { ...order, itemName: order.itemName || '未知品項' };
+  });
+
   return (
     <div className="mt-12 space-y-6 pb-20">
       <div className="flex items-center gap-3 mb-2">
         <div className="bg-primary p-2 rounded-lg border-2 border-slate-900 shadow-[2px_2px_0px_0px_rgba(15,23,42,1)]">
           <Users className="text-white" size={20} />
         </div>
-        <h2 className="text-2xl font-black text-slate-900">大家點了什麼 ({filteredOrders.length})</h2>
+        <h2 className="text-2xl font-black text-slate-900">大家點了什麼 ({enhancedOrders.length})</h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <AnimatePresence>
-          {filteredOrders.map((order, index) => (
+          {enhancedOrders.map((order, index) => (
             <motion.div
               key={order.id}
               initial={{ opacity: 0, y: 20 }}
