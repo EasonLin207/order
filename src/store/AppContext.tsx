@@ -24,7 +24,7 @@ interface AppContextType {
   setSelectedRestaurantId: (id: string | null) => void;
   menu: MenuItem[];
   orders: Order[];
-  addOrder: (customerName: string, item: MenuItem, notes: string) => Promise<void>;
+  addOrder: (customerName: string, notes: string, cart: { item: MenuItem, quantity: number }[]) => Promise<void>;
   updateOrderStatus: (orderId: string, status: Order['status']) => Promise<void>;
   updateMenu: (restaurantId: string, newItems: MenuItem[]) => Promise<void>;
   addMenuItem: (item: Omit<MenuItem, 'id'>) => Promise<void>;
@@ -175,25 +175,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const addOrder = async (customerName: string, item: MenuItem, notes: string) => {
+  const addOrder = async (customerName: string, notes: string, cart: { item: MenuItem, quantity: number }[]) => {
     if (!firebaseReady || !dbInstance || !selectedRestaurantId) {
       toast.error('系統尚未就緒或未選擇餐廳');
       return;
     }
 
+    if (cart.length === 0) {
+      toast.error('請選擇品項');
+      return;
+    }
+
+    const loadingToast = toast.loading('點餐中...');
     try {
-      await addDoc(collection(dbInstance, 'orders'), {
-        restaurantId: selectedRestaurantId,
-        customerName,
-        itemId: item.id,
-        itemName: item.name,
-        price: item.price,
-        notes,
-        status: 'pending',
-        createdAt: serverTimestamp(),
-      });
+      const batch = writeBatch(dbInstance);
+      
+      for (const cartItem of cart) {
+        const orderRef = doc(collection(dbInstance, 'orders'));
+        batch.set(orderRef, {
+          restaurantId: selectedRestaurantId,
+          customerName,
+          itemId: cartItem.item.id,
+          itemName: cartItem.item.name,
+          price: cartItem.item.price,
+          quantity: cartItem.quantity,
+          notes,
+          status: 'pending',
+          createdAt: serverTimestamp(),
+        });
+      }
+      
+      await batch.commit();
+      toast.dismiss(loadingToast);
       toast.success('點餐成功！');
     } catch (e) {
+      toast.dismiss(loadingToast);
       toast.error('點餐失敗');
     }
   };

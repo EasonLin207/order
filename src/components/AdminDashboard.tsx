@@ -53,9 +53,9 @@ export const AdminDashboard: React.FC = () => {
 
   // Statistics for selected restaurant
   const filteredOrders = orders.filter(o => o.restaurantId === selectedRestaurantId);
-  const totalOrders = filteredOrders.length;
+  const totalOrders = filteredOrders.reduce((sum, o) => sum + (o.quantity || 1), 0);
   const orderStats = filteredOrders.reduce((acc, order) => {
-    acc[order.itemName] = (acc[order.itemName] || 0) + 1;
+    acc[order.itemName] = (acc[order.itemName] || 0) + (order.quantity || 1);
     return acc;
   }, {} as Record<string, number>);
 
@@ -200,26 +200,26 @@ export const AdminDashboard: React.FC = () => {
           {restaurants.map(r => (
             <div 
               key={r.id}
-              className={`p-4 rounded-2xl border-4 transition-all relative group ${
+              onClick={() => setSelectedRestaurantId(r.id)}
+              className={`p-4 rounded-3xl border-4 transition-all relative group cursor-pointer ${
                 selectedRestaurantId === r.id 
-                  ? 'border-slate-900 bg-secondary shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] translate-y-[-2px] text-white' 
-                  : 'border-slate-100 bg-slate-50 hover:border-slate-300 text-slate-500'
+                  ? 'border-slate-900 bg-secondary shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] translate-y-[-2px] text-white' 
+                  : 'border-slate-200 bg-slate-50 hover:border-slate-500 text-slate-500'
               }`}
             >
-              <div 
-                className="cursor-pointer pr-8"
-                onClick={() => setSelectedRestaurantId(r.id)}
-              >
-                <div className="text-sm font-bold opacity-60 uppercase mb-1">Restaurant</div>
-                <div className="text-lg font-black truncate">{r.name}</div>
+              <div className="pr-8">
+                <div className={`text-[10px] font-black uppercase mb-1 ${selectedRestaurantId === r.id ? 'text-white/60' : 'text-slate-400'}`}>
+                  Store ID: {r.id.substring(0, 8)}
+                </div>
+                <div className="text-xl font-black truncate leading-tight">{r.name}</div>
               </div>
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
                   if (confirm(`確定刪除 ${r.name} 嗎？`)) deleteRestaurant(r.id);
                 }}
-                className={`absolute top-4 right-4 p-1.5 rounded-lg transition-colors ${
-                  selectedRestaurantId === r.id ? 'hover:bg-white/20' : 'opacity-0 group-hover:opacity-100 hover:bg-slate-200'
+                className={`absolute top-4 right-4 p-2 rounded-xl transition-all ${
+                  selectedRestaurantId === r.id ? 'hover:bg-white/20 text-white' : 'opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white'
                 }`}
               >
                 <Trash2 size={16} />
@@ -378,7 +378,7 @@ export const AdminDashboard: React.FC = () => {
                           value={itemForm.name}
                           onChange={e => setItemForm({...itemForm, name: e.target.value})}
                           placeholder="例如：雞肉便當"
-                          className="w-full p-3 border- border-2 border-slate-900 rounded-xl font-black bg-white"
+                          className="w-full p-3 border-2 border-slate-900 rounded-xl font-black bg-white focus:border-primary transition-colors"
                         />
                       </div>
                       <div>

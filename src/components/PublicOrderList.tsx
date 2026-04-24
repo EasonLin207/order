@@ -55,9 +55,11 @@ export const PublicOrderList: React.FC = () => {
               </div>
 
               <div className="bg-slate-50 p-3 rounded-xl border-2 border-slate-200 flex items-center gap-3">
-                <ShoppingBag size={18} className="text-primary" />
+                <div className="bg-white p-2 rounded-lg border-2 border-slate-100 font-black text-primary min-w-[40px] text-center">
+                  x{order.quantity || 1}
+                </div>
                 <div>
-                  <div className="font-black text-slate-900">{order.itemName}</div>
+                  <div className="font-black text-slate-900 leading-tight">{order.itemName}</div>
                   {order.notes && (
                     <div className="text-xs text-slate-500 font-medium italic mt-0.5">
                       「{order.notes}」

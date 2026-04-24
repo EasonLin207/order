@@ -22,6 +22,7 @@ export interface Order {
   itemId: string;
   itemName: string;
   price: number;
+  quantity: number;
   status: 'pending' | 'cooking' | 'ready' | 'delivered' | 'cancelled';
   createdAt: any; // Firestore Timestamp
 }
