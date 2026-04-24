@@ -120,7 +120,7 @@ export const OrderForm: React.FC = () => {
             type="button"
             onClick={() => {
               setSelectedRestaurantId(null);
-              setSelectedItem(null);
+              setCart({});
             }}
             className="flex items-center gap-2 text-slate-400 font-black hover:text-primary transition-colors text-sm mb-4"
           >
@@ -161,41 +161,67 @@ export const OrderForm: React.FC = () => {
                       return (
                         <div
                           key={item.id}
-                          className={`flex flex-col p-5 rounded-2xl border-4 transition-all relative ${
+                          className={`flex flex-col p-5 rounded-2xl border-4 transition-all relative select-none ${
                             qty > 0
-                              ? 'bg-primary text-white border-slate-900 shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] translate-y-[-2px]'
-                              : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700'
+                              ? 'border-slate-900 bg-secondary shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] translate-y-[-2px] text-white'
+                              : 'bg-white border-slate-200 hover:border-slate-400 text-slate-800'
                           }`}
                         >
-                          <div className="flex justify-between items-start mb-2">
-                            <ShoppingBag size={20} className={qty > 0 ? 'text-white' : 'text-slate-400'} />
-                            <span className={`font-black text-xl ${qty > 0 ? 'text-white/80' : 'text-primary'}`}>
-                              ${item.price}
-                            </span>
+                          {/* Item Clickable Area */}
+                          <div 
+                            className="flex flex-col h-full cursor-pointer group"
+                            onClick={() => updateQuantity(item.id, 1)}
+                          >
+                            <div className="flex justify-between items-start mb-3">
+                              <div className={`p-2 rounded-lg ${qty > 0 ? 'bg-white/20' : 'bg-slate-100'}`}>
+                                <ShoppingBag size={20} className={qty > 0 ? 'text-white' : 'text-slate-500'} />
+                              </div>
+                              <span className={`font-black text-2xl ${qty > 0 ? 'text-white' : 'text-primary'}`}>
+                                ${item.price}
+                              </span>
+                            </div>
+                            <span className="font-black text-xl leading-tight mb-6">{item.name}</span>
                           </div>
-                          <span className="font-black text-lg leading-tight mb-4">{item.name}</span>
                           
-                          <div className="mt-auto flex items-center justify-between gap-2 bg-slate-900/10 p-2 rounded-xl">
+                          {/* Control Row */}
+                          <div className={`mt-auto flex items-center justify-between gap-1 p-1 rounded-xl transition-colors ${
+                            qty > 0 ? 'bg-white/20' : 'bg-slate-50 border-2 border-slate-100'
+                          }`}>
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.id, -1)}
-                              className={`p-1 rounded-lg transition-colors ${
-                                qty > 0 ? 'hover:bg-white/20 text-white' : 'hover:bg-slate-100 text-slate-400'
+                              disabled={qty === 0}
+                              className={`p-2 rounded-lg transition-all ${
+                                qty > 0 
+                                  ? 'hover:bg-white/20 text-white active:scale-90' 
+                                  : 'text-slate-200 cursor-not-allowed'
                               }`}
                             >
-                              <Minus size={18} strokeWidth={3} />
+                              <Minus size={20} strokeWidth={4} />
                             </button>
-                            <span className="font-black text-lg w-8 text-center">
-                              {qty}
-                            </span>
+                            
+                            <AnimatePresence mode="wait">
+                              <motion.span 
+                                key={qty}
+                                initial={{ y: 5, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                exit={{ y: -5, opacity: 0 }}
+                                className="font-black text-xl w-8 text-center"
+                              >
+                                {qty}
+                              </motion.span>
+                            </AnimatePresence>
+
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.id, 1)}
-                              className={`p-1 rounded-lg transition-colors ${
-                                qty > 0 ? 'hover:bg-white/20 text-white' : 'hover:bg-slate-100 text-slate-400'
+                              className={`p-2 rounded-lg transition-all ${
+                                qty > 0 
+                                  ? 'hover:bg-white/20 text-white active:scale-90' 
+                                  : 'hover:bg-slate-200 text-slate-600 active:scale-90'
                               }`}
                             >
-                              <Plus size={18} strokeWidth={3} />
+                              <Plus size={20} strokeWidth={4} />
                             </button>
                           </div>
                         </div>

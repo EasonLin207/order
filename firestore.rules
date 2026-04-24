@@ -1,67 +1,37 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
     function isSignedIn() {
       return request.auth != null;
-    }
-    
-    function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
     function isValidId(id) {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
-    function incoming() {
-      return request.resource.data;
+    // Restaurants
+    match /restaurants/{restaurantId} {
+      allow read: if true;
+      allow write: if isSignedIn();
     }
 
-    function existing() {
-      return resource.data;
-    }
-
-    // Default deny
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // Menu rules
+    // Menu Items
     match /menu/{itemId} {
-      allow read: if true; // Menu is public
-      allow write: if isAdmin(); // Only admins can modify menu
+      allow read: if true;
+      allow write: if isSignedIn();
     }
 
-    // Order rules
+    // Orders
     match /orders/{orderId} {
-      // Users can see their own orders if they were signed in, 
-      // but for this simple app we'll allow public creation and admin-only read/update.
-      // Or we can allow anyone to list pending orders for the "stats" if we want a public board.
-      // Requirement: "後台統計：即時從 Firebase 讀取所有訂單"
-      
-      allow get: if true; 
-      allow list: if isAdmin(); // Only admin can list all orders
-      
-      allow create: if 
-        isValidId(orderId) &&
-        incoming().customerName is string &&
-        incoming().customerName.size() > 0 &&
-        incoming().customerName.size() <= 50 &&
-        incoming().status == 'pending' &&
-        incoming().createdAt == request.time;
-        
-      allow update: if 
-        isAdmin() && 
-        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']);
-        
-      allow delete: if isAdmin();
-    }
-    
-    // Admin list
-    match /admins/{userId} {
-      allow read: if isSignedIn();
-      allow write: if false; // Managed via Firebase Console or manual entry
+      allow read: if true;
+      allow create: if true;
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
     }
   }
 }

@@ -1,50 +1,59 @@
 {
   "entities": {
-    "MenuItem": {
-      "title": "Menu Item",
-      "description": "A bento item available for order",
+    "Restaurant": {
+      "title": "Restaurant",
+      "description": "A restaurant offering a menu",
       "type": "object",
       "properties": {
         "name": { "type": "string" },
-        "price": { "type": "number" },
         "active": { "type": "boolean" },
-        "category": { "type": "string" }
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["name", "price", "active"]
+      "required": ["name", "active"]
+    },
+    "MenuItem": {
+      "title": "MenuItem",
+      "description": "An individual dish or drink on a menu",
+      "type": "object",
+      "properties": {
+        "restaurantId": { "type": "string" },
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "active": { "type": "boolean" }
+      },
+      "required": ["restaurantId", "name", "price", "active"]
     },
     "Order": {
       "title": "Order",
-      "description": "A bento order placed by a customer",
+      "description": "A customer's order for a specific item",
       "type": "object",
       "properties": {
+        "restaurantId": { "type": "string" },
         "customerName": { "type": "string" },
-        "items": { "type": "array" },
-        "totalPrice": { "type": "number" },
+        "itemId": { "type": "string" },
+        "itemName": { "type": "string" },
+        "price": { "type": "number" },
+        "quantity": { "type": "number" },
         "notes": { "type": "string" },
-        "status": { "type": "string", "enum": ["pending", "cooking", "ready", "delivered"] },
+        "status": { "type": "string", "enum": ["pending", "cooking", "ready", "delivered", "cancelled"] },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["customerName", "items", "totalPrice", "status", "createdAt"]
+      "required": ["restaurantId", "customerName", "itemId", "itemName", "price", "quantity", "status"]
     }
   },
   "firestore": {
+    "restaurants": {
+      "schema": "Restaurant",
+      "description": "Collection of restaurants"
+    },
     "menu": {
       "schema": "MenuItem",
-      "description": "Collection of bento items"
+      "description": "Consolidated menu items for all restaurants"
     },
     "orders": {
       "schema": "Order",
-      "description": "Collection of customer orders"
-    },
-    "admins": {
-      "schema": {
-        "title": "Admin",
-        "type": "object",
-        "properties": {
-          "email": { "type": "string" }
-        }
-      },
-      "description": "Whitelist of admin users"
+      "description": "Customer orders"
     }
   }
 }

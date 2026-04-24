@@ -201,29 +201,29 @@ export const AdminDashboard: React.FC = () => {
             <div 
               key={r.id}
               onClick={() => setSelectedRestaurantId(r.id)}
-              className={`p-4 rounded-3xl border-4 transition-all relative group cursor-pointer ${
+              className={`p-6 rounded-3xl border-4 transition-all relative group cursor-pointer ${
                 selectedRestaurantId === r.id 
                   ? 'border-slate-900 bg-secondary shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] translate-y-[-2px] text-white' 
-                  : 'border-slate-200 bg-slate-50 hover:border-slate-500 text-slate-500'
+                  : 'border-slate-300 bg-white hover:border-slate-900 text-slate-900 shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] hover:shadow-[4px_4px_0px_0px_rgba(15,23,42,1)]'
               }`}
             >
-              <div className="pr-8">
-                <div className={`text-[10px] font-black uppercase mb-1 ${selectedRestaurantId === r.id ? 'text-white/60' : 'text-slate-400'}`}>
-                  Store ID: {r.id.substring(0, 8)}
+              <div className="pr-10">
+                <div className={`text-[10px] font-black uppercase mb-1 tracking-widest ${selectedRestaurantId === r.id ? 'text-white/60' : 'text-slate-400'}`}>
+                  Restaurant ID: {r.id.substring(0, 8)}
                 </div>
-                <div className="text-xl font-black truncate leading-tight">{r.name}</div>
+                <div className="text-2xl font-black leading-tight break-words">{r.name}</div>
               </div>
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (confirm(`確定刪除 ${r.name} 嗎？`)) deleteRestaurant(r.id);
-                }}
-                className={`absolute top-4 right-4 p-2 rounded-xl transition-all ${
-                  selectedRestaurantId === r.id ? 'hover:bg-white/20 text-white' : 'opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white'
-                }`}
-              >
-                <Trash2 size={16} />
-              </button>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (confirm(`確定刪除 ${r.name} 嗎？`)) deleteRestaurant(r.id);
+                  }}
+                  className={`absolute top-6 right-6 p-2 rounded-xl transition-all ${
+                    selectedRestaurantId === r.id ? 'hover:bg-white/20 text-white' : 'text-slate-300 hover:bg-red-500 hover:text-white hover:border-slate-900 border-2 border-transparent'
+                  }`}
+                >
+                  <Trash2 size={18} />
+                </button>
             </div>
           ))}
           {restaurants.length === 0 && (
@@ -368,44 +368,46 @@ export const AdminDashboard: React.FC = () => {
                   exit={{ height: 0, opacity: 0 }}
                   className="mb-10 overflow-hidden"
                 >
-                  <form onSubmit={handleItemSubmit} className="p-6 bg-slate-50 rounded-3xl border-4 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)]">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <form onSubmit={handleItemSubmit} className="p-8 bg-slate-50 rounded-3xl border-4 border-slate-900 shadow-[6px_6px_0px_0px_rgba(15,23,42,1)]">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                       <div>
-                        <label className="block text-xs font-black uppercase mb-2">品項名稱</label>
+                        <label className="block text-sm font-black uppercase mb-2 text-slate-900">品項名稱</label>
                         <input 
                           required
                           type="text" 
                           value={itemForm.name}
                           onChange={e => setItemForm({...itemForm, name: e.target.value})}
-                          placeholder="例如：雞肉便當"
-                          className="w-full p-3 border-2 border-slate-900 rounded-xl font-black bg-white focus:border-primary transition-colors"
+                          placeholder="例如：熱美式"
+                          className="w-full p-4 border-4 border-slate-900 rounded-2xl font-black bg-white focus:border-primary transition-colors text-slate-900"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-black uppercase mb-2">價格</label>
+                        <label className="block text-sm font-black uppercase mb-2 text-slate-900">價格 (數字)</label>
                         <input 
                           required
                           type="number" 
                           value={itemForm.price}
                           onChange={e => setItemForm({...itemForm, price: e.target.value})}
                           placeholder="0"
-                          className="w-full p-3 border-2 border-slate-900 rounded-xl font-black bg-white"
+                          className="w-full p-4 border-4 border-slate-900 rounded-2xl font-black bg-white focus:border-primary transition-colors text-slate-900"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-black uppercase mb-2">分類</label>
+                        <label className="block text-sm font-black uppercase mb-2 text-slate-900">分類 (例如：飲品)</label>
                         <input 
                           type="text" 
                           value={itemForm.category}
                           onChange={e => setItemForm({...itemForm, category: e.target.value})}
                           placeholder="例如：主食類"
-                          className="w-full p-3 border-2 border-slate-900 rounded-xl font-black bg-white"
+                          className="w-full p-4 border-4 border-slate-900 rounded-2xl font-black bg-white focus:border-primary transition-colors text-slate-900"
                         />
                       </div>
                     </div>
-                    <button type="submit" className="w-full bg-slate-900 text-white py-4 rounded-xl font-black text-lg shadow-[4px_4px_0px_0px_rgba(255,107,53,1)]">
-                      {editingItemId ? '更新品項' : '確認新增'}
-                    </button>
+                    <div className="flex gap-4">
+                      <button type="submit" className="flex-1 bg-slate-900 text-white py-5 rounded-2xl font-black text-xl shadow-[4px_4px_0px_0px_rgba(255,107,53,1)] hover:translate-y-[-2px] active:translate-y-[0px] transition-all">
+                        {editingItemId ? '更新此品項' : '確認手動新增'}
+                      </button>
+                    </div>
                   </form>
                 </motion.div>
               )}

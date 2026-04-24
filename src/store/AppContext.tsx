@@ -150,7 +150,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addRestaurant = async (name: string) => {
-    if (!dbInstance) return;
+    if (!dbInstance) {
+      toast.error('系統尚未連接資料庫，請稍後或確認設定');
+      return;
+    }
     try {
       await addDoc(collection(dbInstance, 'restaurants'), {
         name,
