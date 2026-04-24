@@ -235,37 +235,73 @@ export const OrderForm: React.FC = () => {
             {/* Cart Summary */}
             {cartItems.length > 0 && (
               <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="brutal-card bg-slate-900 text-white border-slate-900"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="brutal-card bg-white text-slate-900 border-slate-900 overflow-hidden relative"
               >
-                <div className="flex items-center gap-2 mb-4">
-                  <ShoppingBag className="text-primary" />
-                  <h3 className="font-black text-lg uppercase tracking-wider">點餐備忘錄</h3>
-                </div>
-                <div className="space-y-2 mb-6">
-                  {cartItems.map(ci => (
-                    <div key={ci.item.id} className="flex justify-between items-center text-sm">
-                      <span className="font-bold">{ci.item.name} x {ci.quantity}</span>
-                      <span className="font-black text-primary">${ci.item.price * ci.quantity}</span>
+                {/* Decorative Pattern */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-2xl pointer-events-none" />
+                
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                      <div className="bg-slate-900 p-2 rounded-lg">
+                        <ShoppingBag size={20} className="text-white" />
+                      </div>
+                      <h3 className="font-black text-xl uppercase tracking-wider">點餐清單統計</h3>
                     </div>
-                  ))}
-                  <div className="pt-2 border-t border-white/10 flex justify-between items-center bg-white/5 -mx-2 px-2 mt-2 py-2 rounded-lg">
-                    <span className="font-black uppercase text-xs opacity-60">總計金額</span>
-                    <span className="text-2xl font-black text-primary">${totalPrice}</span>
+                    <span className="bg-slate-100 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest text-slate-500">
+                      {cartItems.length} 個品項
+                    </span>
                   </div>
-                </div>
 
-                <div className="space-y-4">
-                  <label className="block text-xs font-black mb-2 uppercase tracking-wide opacity-60 flex items-center gap-2">
-                    如有特殊備註 (如：不加辣、去冰)
-                  </label>
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="請輸入備註內容..."
-                    className="w-full h-20 p-4 border-2 border-white/20 rounded-xl focus:ring-0 focus:border-primary transition-colors bg-white/5 resize-none font-medium placeholder:text-white/20"
-                  />
+                  <div className="space-y-3 mb-8">
+                    {cartItems.map(ci => (
+                      <div key={ci.item.id} className="flex justify-between items-center group">
+                        <div className="flex items-center gap-3">
+                          <span className="w-8 h-8 flex items-center justify-center bg-slate-100 rounded-lg text-xs font-black text-slate-900">
+                            {ci.quantity}
+                          </span>
+                          <span className="font-bold text-slate-900">{ci.item.name}</span>
+                        </div>
+                        <span className="font-black text-primary tracking-tight">
+                          ${ci.item.price * ci.quantity}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-6 border-t-4 border-dashed border-slate-100 flex justify-between items-end mb-8">
+                    <div>
+                      <span className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">
+                        Total Amount
+                      </span>
+                      <span className="text-3xl font-black text-slate-900 leading-none">
+                        ${totalPrice}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">
+                        Subtotal
+                      </span>
+                      <span className="font-black text-slate-500 text-sm">
+                        NTD ${totalPrice}.00
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <label className="block text-xs font-black mb-2 uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 bg-primary rounded-full" />
+                      備註與口味特殊要求
+                    </label>
+                    <textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="例如：去冰、微糖、不加辣..."
+                      className="w-full h-24 p-4 border-4 border-slate-900 rounded-2xl focus:ring-0 focus:border-primary transition-all bg-white resize-none font-medium placeholder:text-slate-300 text-slate-900"
+                    />
+                  </div>
                 </div>
               </motion.div>
             )}

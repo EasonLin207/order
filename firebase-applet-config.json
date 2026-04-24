@@ -1,8 +1,10 @@
 {
-  "projectId": "",
-  "appId": "",
-  "apiKey": "",
-  "authDomain": "",
-  "messagingSenderId": "",
-  "storageBucket": ""
+  "projectId": "order-e3f01",
+  "appId": "1:512082724173:web:45ff46b03e0a7578c1e304",
+  "apiKey": "AIzaSyDEXQ3SqxalC5yRjggE9KPCNMRR8BNKSQc",
+  "authDomain": "order-e3f01.firebaseapp.com",
+  "firestoreDatabaseId": "order-db-1",
+  "storageBucket": "order-e3f01.firebasestorage.app",
+  "messagingSenderId": "512082724173",
+  "measurementId": ""
 }

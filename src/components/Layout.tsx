@@ -17,7 +17,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, mode, setMode }) => {
             <LayoutGrid size={24} strokeWidth={3} />
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center">
-            便當快點
+            訂餐系統
             <span className={`ml-2 text-xs sm:text-lg font-bold uppercase tracking-widest px-2 py-0.5 rounded-lg ${
               mode === 'admin' ? 'bg-secondary/15 text-secondary' : 'bg-primary/15 text-primary'
             }`}>
@@ -48,7 +48,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, mode, setMode }) => {
       </main>
 
       <footer className="p-8 text-center text-slate-400 font-bold text-sm">
-        &copy; {new Date().getFullYear()} 便當快點 - 現代化餐飲管理系統
+        &copy; {new Date().getFullYear()} 訂餐系統 - 現代化餐飲管理系統
       </footer>
     </div>
   );
