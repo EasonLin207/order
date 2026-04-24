@@ -12,6 +12,16 @@ export const OrderForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  // Get uniquely ordered categories
+  const orderedCategories = useMemo(() => {
+    const categories: string[] = [];
+    menu.forEach(item => {
+      const cat = item.category || '精選品項';
+      if (!categories.includes(cat)) categories.push(cat);
+    });
+    return categories;
+  }, [menu]);
+
   // Group menu by category
   const categorizedMenu = useMemo(() => {
     const groups: Record<string, MenuItem[]> = {};
@@ -123,78 +133,81 @@ export const OrderForm: React.FC = () => {
 
             {/* Menu Sections */}
             <div className="space-y-10">
-              {(Object.entries(categorizedMenu) as [string, MenuItem[]][]).map(([category, items]) => (
-                <div key={category} className="space-y-4">
-                  <h3 className="text-xl font-black flex items-center gap-2 text-slate-900">
-                    {category}
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {items.filter(item => item.active).map((item) => {
-                      const qty = cart[item.id] || 0;
-                      return (
-                        <motion.div
-                          layout
-                          key={item.id}
-                          className={`flex flex-col p-4 rounded-2xl border-4 transition-all relative select-none cursor-pointer ${
-                            qty > 0
-                              ? 'border-slate-900 bg-secondary shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] translate-y-[-1px] text-white'
-                              : 'bg-white border-slate-200 hover:border-slate-300 text-slate-900'
-                          }`}
-                          onClick={() => qty === 0 && updateQuantity(item.id, 1)}
-                        >
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="font-black text-lg leading-tight flex-1">{item.name}</span>
-                            <span className={`font-black text-xl ml-4 ${qty > 0 ? 'text-white' : 'text-primary'}`}>
-                              ${item.price}
-                            </span>
-                          </div>
-                          
-                          <AnimatePresence>
-                            {qty > 0 && (
-                              <motion.div 
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                className="overflow-hidden"
-                              >
-                                <div className="mt-3 pt-3 border-t-2 border-white/20 flex items-center justify-center">
-                                  <div className="flex items-center gap-4 bg-white/20 p-1 rounded-xl">
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        updateQuantity(item.id, -1);
-                                      }}
-                                      className="p-1.5 rounded-lg hover:bg-white/20 active:scale-90 transition-all"
-                                    >
-                                      <Minus size={18} strokeWidth={4} />
-                                    </button>
-                                    
-                                    <span className="font-black text-lg w-6 text-center">
-                                      {qty}
-                                    </span>
+              {orderedCategories.map(category => {
+                const items = categorizedMenu[category] || [];
+                return (
+                  <div key={category} className="space-y-4">
+                    <h3 className="text-xl font-black flex items-center gap-2 text-slate-900">
+                      {category}
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {items.filter(item => item.active).map((item) => {
+                        const qty = cart[item.id] || 0;
+                        return (
+                          <motion.div
+                            layout
+                            key={item.id}
+                            className={`flex flex-col p-4 rounded-2xl border-4 transition-all relative select-none cursor-pointer ${
+                              qty > 0
+                                ? 'border-slate-900 bg-secondary shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] translate-y-[-1px] text-white'
+                                : 'bg-white border-slate-200 hover:border-slate-300 text-slate-900'
+                            }`}
+                            onClick={() => qty === 0 && updateQuantity(item.id, 1)}
+                          >
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="font-black text-lg leading-tight flex-1">{item.name}</span>
+                              <span className={`font-black text-xl ml-4 ${qty > 0 ? 'text-white' : 'text-primary'}`}>
+                                ${item.price}
+                              </span>
+                            </div>
+                            
+                            <AnimatePresence>
+                              {qty > 0 && (
+                                <motion.div 
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="mt-3 pt-3 border-t-2 border-white/20 flex items-center justify-center">
+                                    <div className="flex items-center gap-4 bg-white/20 p-1 rounded-xl">
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          updateQuantity(item.id, -1);
+                                        }}
+                                        className="p-1.5 rounded-lg hover:bg-white/20 active:scale-90 transition-all"
+                                      >
+                                        <Minus size={18} strokeWidth={4} />
+                                      </button>
+                                      
+                                      <span className="font-black text-lg w-6 text-center">
+                                        {qty}
+                                      </span>
 
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        updateQuantity(item.id, 1);
-                                      }}
-                                      className="p-1.5 rounded-lg hover:bg-white/20 active:scale-90 transition-all"
-                                    >
-                                      <Plus size={18} strokeWidth={4} />
-                                    </button>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          updateQuantity(item.id, 1);
+                                        }}
+                                        className="p-1.5 rounded-lg hover:bg-white/20 active:scale-90 transition-all"
+                                      >
+                                        <Plus size={18} strokeWidth={4} />
+                                      </button>
+                                    </div>
                                   </div>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </motion.div>
-                      );
-                    })}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Cart Summary */}

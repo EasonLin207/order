@@ -120,7 +120,7 @@ export const AdminDashboard: React.FC = () => {
           restaurantId: selectedRestaurantId,
           name: row.name || row.品項 || row.名稱 || row.Name,
           price: Number(row.price || row.價格 || row.單價 || row.Price),
-          category: row.category || row.分類 || row.Category || '未分類',
+          category: row.category || row.分類 || row.Category || '精選品項',
           active: true
         })).filter(item => item.name && !isNaN(item.price));
 
@@ -166,7 +166,7 @@ export const AdminDashboard: React.FC = () => {
       restaurantId: selectedRestaurantId,
       name: itemForm.name,
       price: Number(itemForm.price),
-      category: itemForm.category || '未分類',
+      category: itemForm.category || '精選品項',
       active: true
     };
 
@@ -274,7 +274,7 @@ export const AdminDashboard: React.FC = () => {
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (confirm(`確定刪除 ${r.name} 嗎？`)) deleteRestaurant(r.id);
+                    deleteRestaurant(r.id);
                   }}
                   className={`p-2 rounded-xl transition-all ${
                     selectedRestaurantId === r.id ? 'hover:bg-white/20 text-white' : 'text-slate-300 hover:bg-red-500 hover:text-white hover:border-slate-900 border-2 border-transparent'
@@ -565,7 +565,7 @@ export const AdminDashboard: React.FC = () => {
                       <td className="py-4 font-black text-slate-900">{item.name}</td>
                       <td className="py-4">
                         <span className="bg-slate-100 px-2 py-1 rounded-lg text-xs font-black text-slate-500 uppercase">
-                          {item.category || '未分類'}
+                          {item.category || '精選品項'}
                         </span>
                       </td>
                       <td className="py-4 font-black text-primary">${item.price}</td>
@@ -578,9 +578,7 @@ export const AdminDashboard: React.FC = () => {
                             <Edit2 size={16} />
                           </button>
                           <button 
-                            onClick={() => {
-                              if (confirm(`確定刪除 ${item.name} 嗎？`)) deleteMenuItem(item.id);
-                            }}
+                            onClick={() => deleteMenuItem(item.id)}
                             className="p-2 text-slate-400 hover:text-red-500 transition-colors"
                           >
                             <Trash2 size={16} />

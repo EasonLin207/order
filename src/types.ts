@@ -12,6 +12,7 @@ export interface MenuItem {
   price: number;
   category?: string;
   active: boolean;
+  index?: number;
 }
 
 export interface Order {

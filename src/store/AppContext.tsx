@@ -107,7 +107,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const menuQuery = query(collection(dbInstance, 'menu'), where('restaurantId', '==', selectedRestaurantId));
       menuUnsub = onSnapshot(menuQuery, { includeMetadataChanges: true }, (snapshot) => {
         const menuData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MenuItem));
-        setMenu(menuData);
+        // Sort client-side by index to avoid composite index requirement
+        const sortedMenu = [...menuData].sort((a, b) => (a.index || 0) - (b.index || 0));
+        setMenu(sortedMenu);
       });
 
       // Subscribe to Orders for selected restaurant
@@ -143,9 +145,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addMenuItem = async (item: Omit<MenuItem, 'id'>) => {
     if (!dbInstance) return;
     try {
+      const nextIndex = menu.length > 0 ? Math.max(...menu.map(m => m.index || 0)) + 1 : 0;
       await addDoc(collection(dbInstance, 'menu'), {
         ...item,
-        active: true
+        active: true,
+        index: nextIndex
       });
       toast.success('品項已新增');
     } catch (e) {
@@ -281,14 +285,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const batch = writeBatch(dbInstance);
       oldDocs.forEach(d => batch.delete(d.ref));
       
-      for (const item of newItems) {
+      for (let i = 0; i < newItems.length; i++) {
+        const item = newItems[i];
         const itemRef = doc(collection(dbInstance, 'menu'));
         batch.set(itemRef, {
           restaurantId,
           name: item.name,
           price: item.price,
-          category: item.category || '未分類',
+          category: item.category || '精選品項',
           active: true,
+          index: i
         });
       }
       
