@@ -93,8 +93,7 @@ export const OrderForm: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6">
       <div className="text-center mb-8">
-        <h2 className="text-4xl font-black text-slate-900 mb-2">團購點餐</h2>
-        <p className="text-slate-500 font-bold uppercase tracking-widest text-sm">- 選擇餐廳與美味點心 -</p>
+        <h2 className="text-4xl font-black text-slate-900 mb-2">{selectedRestaurant?.name || '團購點餐'}</h2>
       </div>
 
       {!selectedRestaurantId ? (
@@ -127,9 +126,6 @@ export const OrderForm: React.FC = () => {
               {(Object.entries(categorizedMenu) as [string, MenuItem[]][]).map(([category, items]) => (
                 <div key={category} className="space-y-4">
                   <h3 className="text-xl font-black flex items-center gap-2 text-slate-900">
-                    <span className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center text-primary text-sm font-black">
-                      #
-                    </span>
                     {category}
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -161,7 +157,7 @@ export const OrderForm: React.FC = () => {
                                 exit={{ height: 0, opacity: 0 }}
                                 className="overflow-hidden"
                               >
-                                <div className="mt-3 pt-3 border-t-2 border-white/20 flex items-center justify-between">
+                                <div className="mt-3 pt-3 border-t-2 border-white/20 flex items-center justify-center">
                                   <div className="flex items-center gap-4 bg-white/20 p-1 rounded-xl">
                                     <button
                                       type="button"
@@ -189,9 +185,6 @@ export const OrderForm: React.FC = () => {
                                       <Plus size={18} strokeWidth={4} />
                                     </button>
                                   </div>
-                                  <span className="text-xs font-black uppercase tracking-widest opacity-60">
-                                    已選擇
-                                  </span>
                                 </div>
                               </motion.div>
                             )}

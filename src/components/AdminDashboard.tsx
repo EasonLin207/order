@@ -150,9 +150,8 @@ export const AdminDashboard: React.FC = () => {
 
   const handleReset = async () => {
     if (!selectedRestaurantId) return;
-    if (window.confirm('確定要歸零今日點餐數據嗎？這將刪除所有訂單紀錄。')) {
-      await resetTodayOrders(selectedRestaurantId);
-    }
+    // Removing window.confirm as it might be blocked in some environments/iframes
+    await resetTodayOrders(selectedRestaurantId);
   };
 
   const handleItemSubmit = async (e: React.FormEvent) => {

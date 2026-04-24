@@ -48,7 +48,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, mode, setMode }) => {
       </main>
 
       <footer className="p-8 text-center text-slate-400 font-bold text-sm">
-        &copy; {new Date().getFullYear()} 訂餐系統 - 現代化餐飲管理系統
+        {/* Footer info removed as requested */}
       </footer>
     </div>
   );
