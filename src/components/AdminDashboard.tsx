@@ -75,17 +75,19 @@ export const AdminDashboard: React.FC = () => {
     }
     
     if (!acc[name]) {
-      acc[name] = { total: 0, withNotes: 0 };
+      acc[name] = { total: 0, withNotes: 0, notes: [] };
     }
     
     acc[name].total += (order.quantity || 1);
-    if (order.notes && order.notes.trim() !== '') {
+    const note = (order.notes || '').trim();
+    if (note) {
       acc[name].withNotes += (order.quantity || 1);
+      acc[name].notes.push(note);
     }
     return acc;
-  }, {} as Record<string, { total: number, withNotes: number }>);
+  }, {} as Record<string, { total: number, withNotes: number, notes: string[] }>);
 
-  const sortedStats = (Object.entries(orderStats) as [string, { total: number, withNotes: number }][]).sort((a, b) => b[1].total - a[1].total);
+  const sortedStats = (Object.entries(orderStats) as [string, { total: number, withNotes: number, notes: string[] }][]).sort((a, b) => b[1].total - a[1].total);
 
   // Group by person for individual details
   const personOrders = filteredOrders.reduce((acc, order) => {
@@ -388,15 +390,32 @@ export const AdminDashboard: React.FC = () => {
               </div>
               
               <div className="space-y-6 flex-1">
-                {(sortedStats as [string, { total: number, withNotes: number }][]).map(([name, stats]) => (
+                {(sortedStats as [string, { total: number, withNotes: number, notes: string[] }][]).map(([name, stats]) => (
                   <div key={name} className="space-y-3">
                     <div className="flex justify-between items-end">
-                      <div>
-                        <span className="text-lg font-black text-slate-900">{name}</span>
-                        {stats.withNotes > 0 && (
-                          <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-amber-50 text-amber-600 border border-amber-200">
-                            {stats.withNotes} 份含備註
-                          </span>
+                      <div className="flex-1">
+                        <div className="flex items-center flex-wrap gap-2 mb-1">
+                          <span className="text-lg font-black text-slate-900">{name}</span>
+                          {stats.withNotes > 0 && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-amber-50 text-amber-600 border border-amber-200">
+                              {stats.withNotes} 份含備註
+                            </span>
+                          )}
+                        </div>
+                        {stats.notes.length > 0 && (
+                          <div className="bg-amber-50/50 p-2 rounded-lg border border-dashed border-amber-100 mt-1">
+                            <div className="text-[10px] font-black text-amber-600 uppercase mb-1">備註細節：</div>
+                            <div className="flex flex-wrap gap-x-3 gap-y-1">
+                              {Array.from(new Set(stats.notes)).map((note, nIdx) => {
+                                const count = stats.notes.filter(n => n === note).length;
+                                return (
+                                  <span key={nIdx} className="text-xs font-bold text-slate-600">
+                                    • {note} {count > 1 ? `(x${count})` : ''}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
                         )}
                       </div>
                       <div className="text-right">
