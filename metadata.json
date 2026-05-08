@@ -1,5 +1,5 @@
 {
-  "name": "點餐系統",
+  "name": "訂餐系統",
   "description": "一個現代化的便當訂購系統，支援前台點餐、後台即時統計與 Excel 菜單管理，整合 Firebase 雲端資料庫。",
   "requestFramePermissions": [],
   "majorCapabilities": []

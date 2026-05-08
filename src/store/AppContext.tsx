@@ -30,6 +30,7 @@ interface AppContextType {
   addMenuItem: (item: Omit<MenuItem, 'id'>) => Promise<void>;
   updateMenuItem: (id: string, updates: Partial<MenuItem>) => Promise<void>;
   deleteMenuItem: (id: string) => Promise<void>;
+  deleteOrder: (id: string) => Promise<void>;
   addRestaurant: (name: string) => Promise<void>;
   deleteRestaurant: (id: string) => Promise<void>;
   resetTodayOrders: (restaurantId: string) => Promise<void>;
@@ -172,6 +173,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       await deleteDoc(doc(dbInstance, 'menu', id));
       toast.success('已刪除');
+    } catch (e) {
+      toast.error('刪除失敗');
+    }
+  };
+
+  const deleteOrder = async (id: string) => {
+    if (!dbInstance) return;
+    try {
+      await deleteDoc(doc(dbInstance, 'orders', id));
+      toast.success('訂單已刪除');
     } catch (e) {
       toast.error('刪除失敗');
     }
@@ -337,6 +348,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addMenuItem,
       updateMenuItem,
       deleteMenuItem,
+      deleteOrder,
       addRestaurant,
       deleteRestaurant,
       toggleRestaurantActive,

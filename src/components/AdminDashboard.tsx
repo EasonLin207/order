@@ -33,6 +33,7 @@ export const AdminDashboard: React.FC = () => {
     addMenuItem,
     updateMenuItem,
     deleteMenuItem,
+    deleteOrder,
     addRestaurant, 
     deleteRestaurant,
     toggleRestaurantActive,
@@ -447,7 +448,16 @@ export const AdminDashboard: React.FC = () => {
                             <span className="text-xs font-black text-secondary">x{o.quantity}</span>
                             <span className="font-bold text-slate-700 text-sm">{o.itemName}</span>
                           </div>
-                          <span className="font-black text-slate-900 text-sm">${o.price * o.quantity}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-black text-slate-900 text-sm">${o.price * o.quantity}</span>
+                            <button 
+                              onClick={() => deleteOrder(o.id)}
+                              className="p-1 text-slate-300 hover:text-red-500 transition-colors"
+                              title="刪除此項點餐"
+                            >
+                              <X size={14} strokeWidth={3} />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
