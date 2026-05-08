@@ -57,6 +57,9 @@ export const AdminDashboard: React.FC = () => {
   // Statistics for selected restaurant
   const filteredOrders = orders.filter(o => o.restaurantId === selectedRestaurantId);
   const totalOrders = filteredOrders.reduce((sum, o) => sum + (o.quantity || 1), 0);
+  const totalOrdersWithNotes = filteredOrders
+    .filter(o => o.notes && o.notes.trim() !== '')
+    .reduce((sum, o) => sum + (o.quantity || 1), 0);
   
   // Group by item for summary
   const orderStats = filteredOrders.reduce((acc, order) => {
@@ -71,11 +74,18 @@ export const AdminDashboard: React.FC = () => {
       name = '未知品項';
     }
     
-    acc[name] = (acc[name] || 0) + (order.quantity || 1);
+    if (!acc[name]) {
+      acc[name] = { total: 0, withNotes: 0 };
+    }
+    
+    acc[name].total += (order.quantity || 1);
+    if (order.notes && order.notes.trim() !== '') {
+      acc[name].withNotes += (order.quantity || 1);
+    }
     return acc;
-  }, {} as Record<string, number>);
+  }, {} as Record<string, { total: number, withNotes: number }>);
 
-  const sortedStats = Object.entries(orderStats).sort((a, b) => (b[1] as number) - (a[1] as number));
+  const sortedStats = (Object.entries(orderStats) as [string, { total: number, withNotes: number }][]).sort((a, b) => b[1].total - a[1].total);
 
   // Group by person for individual details
   const personOrders = filteredOrders.reduce((acc, order) => {
@@ -314,6 +324,12 @@ export const AdminDashboard: React.FC = () => {
                   <Package size={16} /> 本日點餐數
                 </div>
                 <div className="text-5xl font-black">{totalOrders}</div>
+                {totalOrdersWithNotes > 0 && (
+                  <div className="text-xs font-black mt-2 bg-white/20 px-2 py-1 rounded-lg inline-flex items-center gap-1.5 border border-white/10">
+                    <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse" />
+                    其中 {totalOrdersWithNotes} 份含備註
+                  </div>
+                )}
               </div>
               <RefreshCcw size={32} className="opacity-20 animate-spin" style={{ animationDuration: '5s' }} />
             </div>
@@ -372,21 +388,26 @@ export const AdminDashboard: React.FC = () => {
               </div>
               
               <div className="space-y-6 flex-1">
-                {sortedStats.map(([name, count]) => (
+                {(sortedStats as [string, { total: number, withNotes: number }][]).map(([name, stats]) => (
                   <div key={name} className="space-y-3">
                     <div className="flex justify-between items-end">
                       <div>
                         <span className="text-lg font-black text-slate-900">{name}</span>
+                        {stats.withNotes > 0 && (
+                          <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-amber-50 text-amber-600 border border-amber-200">
+                            {stats.withNotes} 份含備註
+                          </span>
+                        )}
                       </div>
                       <div className="text-right">
-                        <span className="text-3xl font-black text-primary">{count}</span>
+                        <span className="text-3xl font-black text-primary">{stats.total}</span>
                         <span className="text-xs font-bold text-slate-400 ml-1">份</span>
                       </div>
                     </div>
                     <div className="w-full bg-slate-100 h-4 rounded-full overflow-hidden border-2 border-slate-200">
                       <motion.div 
                         initial={{ width: 0 }}
-                        animate={{ width: `${((count as number) / Math.max(totalOrders, 1)) * 100}%` }}
+                        animate={{ width: `${(stats.total / Math.max(totalOrders, 1)) * 100}%` }}
                         className="bg-primary h-full"
                         transition={{ duration: 0.8, ease: "easeOut" }}
                       />
