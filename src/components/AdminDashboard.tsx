@@ -472,8 +472,9 @@ export const AdminDashboard: React.FC = () => {
                         </div>
                         <div>
                           <h4 className="font-black text-slate-900 text-lg">{customerName}</h4>
-                          <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                            Total: ${orders.reduce((sum, o) => sum + (o.price * o.quantity), 0)}
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">總計</span>
+                            <span className="text-sm font-black text-primary">${orders.reduce((sum, o) => sum + (o.price * o.quantity), 0)}</span>
                           </div>
                         </div>
                       </div>
