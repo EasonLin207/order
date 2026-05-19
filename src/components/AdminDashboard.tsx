@@ -16,9 +16,11 @@ import {
   AlertCircle,
   Edit2,
   CheckCircle2,
-  X
+  X,
+  Camera
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { toPng } from 'html-to-image';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
@@ -41,7 +43,9 @@ export const AdminDashboard: React.FC = () => {
   } = useApp();
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const statsContainerRef = useRef<HTMLDivElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [newRestaurantName, setNewRestaurantName] = useState('');
   const [isAddingRestaurant, setIsAddingRestaurant] = useState(false);
 
@@ -109,6 +113,8 @@ export const AdminDashboard: React.FC = () => {
     acc[customer].push(orderWithPossibleName);
     return acc;
   }, {} as Record<string, typeof filteredOrders>);
+
+  const selectedRestaurant = restaurants.find(r => r.id === selectedRestaurantId);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!selectedRestaurantId) {
@@ -191,6 +197,50 @@ export const AdminDashboard: React.FC = () => {
       setIsAddingItem(false);
     }
     setItemForm({ name: '', price: '', category: '' });
+  };
+
+  const exportAsImage = async () => {
+    if (!statsContainerRef.current) return;
+    
+    setIsExporting(true);
+    const toastId = toast.loading('正在產生正式統計圖片...');
+    
+    try {
+      // We need to wait for React to apply isExporting classes
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Use toPng with more robust options
+      const dataUrl = await toPng(statsContainerRef.current, {
+        backgroundColor: '#f8fafc',
+        width: 1200,
+        style: {
+          padding: '40px',
+          margin: '0',
+          height: 'auto',
+          width: '1200px',
+          maxHeight: 'none',
+          overflow: 'visible',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '32px',
+          borderRadius: '0'
+        },
+        cacheBust: true,
+      });
+      
+      const link = document.createElement('a');
+      const filename = `訂單統計_${selectedRestaurant?.name || '報表'}_${new Date().toLocaleDateString('zh-TW')}.png`;
+      link.download = filename;
+      link.href = dataUrl;
+      link.click();
+      
+      toast.success('圖片產生成功！', { id: toastId });
+    } catch (err) {
+      console.error('Export error:', err);
+      toast.error('圖片產生失敗', { id: toastId });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const startEdit = (item: MenuItem) => {
@@ -360,6 +410,22 @@ export const AdminDashboard: React.FC = () => {
             </button>
 
             <button 
+              onClick={exportAsImage}
+              disabled={isExporting}
+              className="bg-blue-500 p-6 rounded-3xl border-4 border-slate-900 shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] text-white flex items-center justify-between hover:bg-blue-600 transition-all cursor-pointer group md:col-span-1"
+            >
+              <div className="text-left">
+                <div className="text-sm font-black uppercase opacity-80 flex items-center gap-2">
+                  <Camera size={16} /> 統計匯出
+                </div>
+                <div className="text-xl font-black">{isExporting ? '處理中...' : '匯出統計圖片'}</div>
+              </div>
+              <div className="bg-white/20 p-3 rounded-2xl group-hover:scale-110 transition-transform">
+                <Camera size={24} strokeWidth={2.5} />
+              </div>
+            </button>
+
+            <button 
               onClick={handleReset}
               className="bg-red-500 p-6 rounded-3xl border-4 border-slate-900 shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] text-white flex items-center justify-between hover:bg-red-600 transition-all cursor-pointer group md:col-span-1"
             >
@@ -376,12 +442,50 @@ export const AdminDashboard: React.FC = () => {
           </div>
 
           {/* Main Stats */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Item Summary Card */}
-            <div className="brutal-card bg-white text-slate-900 border-slate-900 h-full flex flex-col">
+          <div 
+            ref={statsContainerRef}
+            className={`grid grid-cols-1 lg:grid-cols-2 gap-8 bg-slate-50 p-4 rounded-3xl ${isExporting ? 'w-full !flex flex-col !p-10 !bg-white' : ''}`}
+          >
+            {/* Export Header */}
+            {isExporting && (
+              <div className="col-span-full border-b-8 border-slate-900 pb-10 mb-6 bg-white">
+                <div className="flex justify-between items-end">
+                  <div>
+                    <h1 className="text-7xl font-black text-slate-900 mb-4 tracking-tighter italic">
+                      ORDER<br/>REPORT
+                    </h1>
+                    <div className="flex items-center gap-4 text-2xl font-black text-secondary">
+                      <Store size={32} /> {selectedRestaurant?.name || '餐廳報表'}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-black text-slate-400 uppercase tracking-[0.3em] mb-2 font-mono">Statistical Summary</div>
+                    <div className="text-3xl font-black text-slate-900">{new Date().toLocaleDateString('zh-TW')}</div>
+                    <div className="text-xl font-bold text-slate-400">{new Date().toLocaleTimeString('zh-TW')}</div>
+                  </div>
+                </div>
+
+                <div className="mt-12 grid grid-cols-2 gap-8">
+                  <div className="bg-slate-900 text-white p-10 rounded-[40px] border-8 border-slate-900 shadow-[12px_12px_0px_0px_rgba(46,196,182,1)]">
+                    <div className="text-xl font-black uppercase opacity-60 mb-2 font-mono">Quantity</div>
+                    <div className="text-7xl font-black flex items-baseline gap-2">
+                      {totalOrders} <span className="text-2xl opacity-60">份</span>
+                    </div>
+                  </div>
+                  <div className="bg-secondary text-white p-10 rounded-[40px] border-8 border-slate-900 shadow-[12px_12px_0px_0px_rgba(255,107,53,1)]">
+                    <div className="text-xl font-black uppercase opacity-60 mb-2 font-mono">Revenue</div>
+                    <div className="text-7xl font-black">
+                      <span className="text-3xl opacity-60">$</span>{filteredOrders.reduce((sum, o) => sum + (o.price * o.quantity), 0)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className={`brutal-card bg-white text-slate-900 border-slate-900 flex flex-col w-full ${isExporting ? '!border-8 !shadow-none !p-12' : 'h-full'}`}>
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-black flex items-center gap-3">
-                  <TrendingUp size={28} className="text-primary" /> 
+                <h2 className={`${isExporting ? 'text-4xl' : 'text-2xl'} font-black flex items-center gap-3`}>
+                  <TrendingUp size={isExporting ? 48 : 28} className="text-primary" /> 
                   餐點統計總覽
                 </h2>
                 <div className="bg-slate-100 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest text-slate-400">
@@ -389,27 +493,27 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               </div>
               
-              <div className="space-y-6 flex-1">
+              <div className={`flex-1 ${isExporting ? 'grid grid-cols-2 gap-x-12 gap-y-8' : 'space-y-6'}`}>
                 {(sortedStats as [string, { total: number, withNotes: number, notes: string[] }][]).map(([name, stats]) => (
-                  <div key={name} className="space-y-3">
+                  <div key={name} className={`${isExporting ? 'space-y-2' : 'space-y-3'}`}>
                     <div className="flex justify-between items-end">
                       <div className="flex-1">
                         <div className="flex items-center flex-wrap gap-2 mb-1">
-                          <span className="text-lg font-black text-slate-900">{name}</span>
+                          <span className={`${isExporting ? 'text-2xl' : 'text-lg'} font-black text-slate-900`}>{name}</span>
                           {stats.withNotes > 0 && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-amber-50 text-amber-600 border border-amber-200">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded ${isExporting ? 'text-sm py-0.5 px-2' : 'text-[10px]'} font-black bg-amber-50 text-amber-600 border border-amber-200`}>
                               {stats.withNotes} 份含備註
                             </span>
                           )}
                         </div>
                         {stats.notes.length > 0 && (
-                          <div className="bg-amber-50/50 p-2 rounded-lg border border-dashed border-amber-100 mt-1">
-                            <div className="text-[10px] font-black text-amber-600 uppercase mb-1">備註細節：</div>
+                          <div className={`${isExporting ? 'p-3 border-2' : 'p-2 border-2'} bg-amber-50/50 rounded-lg border-dashed border-amber-100 mt-1`}>
+                            <div className={`${isExporting ? 'text-[10px]' : 'text-[10px]'} font-black text-amber-600 uppercase mb-1 font-mono tracking-widest`}>Notes Details:</div>
                             <div className="flex flex-wrap gap-x-3 gap-y-1">
                               {Array.from(new Set(stats.notes)).map((note, nIdx) => {
                                 const count = stats.notes.filter(n => n === note).length;
                                 return (
-                                  <span key={nIdx} className="text-xs font-bold text-slate-600">
+                                  <span key={nIdx} className={`${isExporting ? 'text-sm' : 'text-xs'} font-bold text-slate-600`}>
                                     • {note} {count > 1 ? `(x${count})` : ''}
                                   </span>
                                 );
@@ -419,11 +523,11 @@ export const AdminDashboard: React.FC = () => {
                         )}
                       </div>
                       <div className="text-right">
-                        <span className="text-3xl font-black text-primary">{stats.total}</span>
-                        <span className="text-xs font-bold text-slate-400 ml-1">份</span>
+                        <span className={`${isExporting ? 'text-4xl' : 'text-3xl'} font-black text-primary`}>{stats.total}</span>
+                        <span className={`${isExporting ? 'text-sm' : 'text-xs'} font-bold text-slate-400 ml-1`}>份</span>
                       </div>
                     </div>
-                    <div className="w-full bg-slate-100 h-4 rounded-full overflow-hidden border-2 border-slate-200">
+                    <div className={`${isExporting ? 'h-6 border-2' : 'h-4 border-2'} w-full bg-slate-100 rounded-full overflow-hidden border-slate-200`}>
                       <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: `${(stats.total / Math.max(totalOrders, 1)) * 100}%` }}
@@ -446,10 +550,10 @@ export const AdminDashboard: React.FC = () => {
             </div>
 
             {/* Individual Orders Card */}
-            <div className="brutal-card bg-white border-slate-900 h-full flex flex-col">
+            <div className={`brutal-card bg-white border-slate-900 flex flex-col w-full ${isExporting ? '!border-8 !shadow-none !p-12 mt-12' : 'h-full'}`}>
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-black flex items-center gap-3 text-slate-900">
-                  <FileText size={28} className="text-secondary" /> 
+                <h2 className={`${isExporting ? 'text-4xl' : 'text-2xl'} font-black flex items-center gap-3 text-slate-900`}>
+                  <FileText size={isExporting ? 48 : 28} className="text-secondary" /> 
                   個別訂單明細
                 </h2>
                 <div className="bg-secondary/10 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest text-secondary">
@@ -457,57 +561,59 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-4 flex-1 overflow-y-auto max-h-[600px] pr-2 custom-scrollbar">
+              <div className={`${isExporting ? 'grid grid-cols-2 gap-6' : 'space-y-4 flex-1 overflow-y-auto max-h-[600px] pr-2 custom-scrollbar'}`}>
                 {Object.entries(personOrders).map(([customerName, orders]: [string, any[]]) => (
                   <motion.div 
                     key={customerName}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="p-4 rounded-2xl border-4 border-slate-100 bg-slate-50 hover:border-slate-900 transition-all group"
+                    className={`${isExporting ? 'border-4 p-8 rounded-[40px] bg-slate-50' : 'p-4 rounded-2xl border-4 border-slate-100 bg-slate-50 hover:border-slate-900'} transition-all group`}
                   >
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-black">
+                    <div className={`flex justify-between items-start ${isExporting ? 'mb-6' : 'mb-3'}`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`${isExporting ? 'w-16 h-16 text-3xl rounded-2xl' : 'w-10 h-10 rounded-xl'} bg-slate-900 flex items-center justify-center text-white font-black`}>
                           {customerName.charAt(0)}
                         </div>
                         <div>
-                          <h4 className="font-black text-slate-900 text-lg">{customerName}</h4>
+                          <h4 className={`font-black text-slate-900 ${isExporting ? 'text-3xl' : 'text-lg'}`}>{customerName}</h4>
                           <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">總計</span>
-                            <span className="text-sm font-black text-primary">${orders.reduce((sum, o) => sum + (o.price * o.quantity), 0)}</span>
+                            <span className={`${isExporting ? 'text-sm' : 'text-[10px]'} font-black uppercase text-slate-400 tracking-widest`}>總計</span>
+                            <span className={`${isExporting ? 'text-2xl' : 'text-sm'} font-black text-primary`}>${orders.reduce((sum, o) => sum + (o.price * o.quantity), 0)}</span>
                           </div>
                         </div>
                       </div>
-                      <span className="text-[10px] font-black uppercase bg-slate-200 px-2 py-0.5 rounded-lg text-slate-500">
+                      <span className={`${isExporting ? 'text-sm px-4 py-1' : 'text-[10px] px-2 py-0.5'} font-black uppercase bg-slate-200 rounded-lg text-slate-500`}>
                         {orders.length} items
                       </span>
                     </div>
-                    <div className="space-y-2">
+                    <div className={`space-y-2 ${isExporting ? 'space-y-3' : ''}`}>
                       {orders.map((o, idx) => (
-                        <div key={idx} className="flex justify-between items-center bg-white p-2 rounded-lg border-2 border-slate-100 group-hover:border-slate-200 transition-colors">
+                        <div key={idx} className={`${isExporting ? 'border-4 p-4 rounded-2xl' : 'border-2 p-2 rounded-lg'} flex justify-between items-center bg-white border-slate-100 group-hover:border-slate-200 transition-colors`}>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-black text-secondary">x{o.quantity}</span>
-                            <span className="font-bold text-slate-700 text-sm">{o.itemName}</span>
+                            <span className={`${isExporting ? 'text-xl' : 'text-xs'} font-black text-secondary`}>x{o.quantity}</span>
+                            <span className={`font-bold text-slate-700 ${isExporting ? 'text-xl' : 'text-sm'}`}>{o.itemName}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="font-black text-slate-900 text-sm">${o.price * o.quantity}</span>
-                            <button 
-                              onClick={() => deleteOrder(o.id)}
-                              className="p-1 text-slate-300 hover:text-red-500 transition-colors"
-                              title="刪除此項點餐"
-                            >
-                              <X size={14} strokeWidth={3} />
-                            </button>
+                            <span className={`font-black text-slate-900 ${isExporting ? 'text-xl' : 'text-sm'}`}>${o.price * o.quantity}</span>
+                            {!isExporting && (
+                              <button 
+                                onClick={() => deleteOrder(o.id)}
+                                className="p-1 text-slate-300 hover:text-red-500 transition-colors"
+                                title="刪除此項點餐"
+                              >
+                                <X size={14} strokeWidth={3} />
+                              </button>
+                            )}
                           </div>
                         </div>
                       ))}
                     </div>
                     {orders[0]?.notes && (
-                      <div className="mt-3 bg-primary/5 p-2 rounded-lg border-2 border-primary/10">
-                        <div className="flex items-center gap-1 mb-1 text-[10px] font-black uppercase text-primary">
+                      <div className={`${isExporting ? 'mt-6 p-6 border-4' : 'mt-3 p-2 border-2'} bg-primary/5 rounded-2xl border-primary/10`}>
+                        <div className={`flex items-center gap-1 mb-1 ${isExporting ? 'text-sm' : 'text-[10px]'} font-black uppercase text-primary`}>
                           <span className="w-1.5 h-1.5 bg-primary rounded-full" /> 備註
                         </div>
-                        <p className="text-xs font-bold text-slate-600 italic">"{orders[0].notes}"</p>
+                        <p className={`${isExporting ? 'text-2xl' : 'text-xs'} font-bold text-slate-600 italic`}>"{orders[0].notes}"</p>
                       </div>
                     )}
                   </motion.div>
